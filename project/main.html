@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="Tools.js"></script>
+</head>
+<body>
+
+<style>
+    .reg{
+        cursor: pointer;
+    }
+    .reg li{
+        display:inline-block;
+    }
+    #reg_form,#login_form{
+        width:300px;
+        border:1px solid red;
+        text-align:center;
+        position:absolute;
+        background:gray;
+        box-shadow:0 0 8px rgba(0,0,0,0.5);
+        display:none;
+    }
+    #reg_form input,#login_form input{
+        width:85%;
+        margin:5px 0;
+        border:1px solid green;
+    }
+    #reg_form input:focus,#login_form input:focus{
+        border:1px solid #369;
+    }
+    #page li{
+        display:inline-block;
+        width:25px;
+        height:25px;
+        border:1px solid #ddd;
+        text-align:center;
+        line-height:25px;
+    }
+    #page .active{
+        background:orange;
+    }
+</style>
+<div id="feedback"></div>
+<div id="reg_form">
+    <span>欢迎注册</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <span id="reg_close">&times;</span>
+    <input type="text" id="username">
+    <input type="password" id="pwd">
+    <button id="regBtn">提交</button>
+</div>
+<div id="login_form">
+    <span>欢迎登录</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <span id="login_close">&times;</span>
+    <input type="text" id="login_username">
+    <input type="password" id="login_pwd">
+    <button id="loginBtn">提交</button>
+</div>
+<ul class="reg">
+    <li id="regBar">注册</li>
+    <li id="loginBar">登录</li>
+</ul>
+<ul class="member_form">
+    <li id="member"></li>
+    <li id="logout">注销</li>
+</ul>
+<ul class="login">
+
+</ul>
+<hr>
+<div id="container2"></div>
+<div id="page"></div>
+<center><img src="main.jpeg"></center>
+<script>
+    var t=new Tools();
+    var reg=document.querySelector(".reg");
+    var page=document.querySelector("#page");
+    var container=document.querySelector("#container");
+    var feedback=document.querySelector("#feedback");
+    var regBtn=document.querySelector("#regBtn");
+    var loginBar=document.querySelector("#loginBar");
+    var username=document.querySelector("#username");
+    var login_username=document.querySelector("#login_username");
+    var login_pwd=document.querySelector("#login_pwd");
+    var member_form=document.querySelector(".member_form");
+    var login_form=document.querySelector("#login_form");
+    var member=document.querySelector("#member");
+    var loginBtn=document.querySelector("#loginBtn");
+    var logout=document.querySelector("#logout");
+    var pwd=document.querySelector("#pwd");
+    var regBar=document.querySelector("#regBar");
+    var reg_close=document.querySelector("#reg_close");
+    var login_close=document.querySelector("#login_close");
+    var reg_form=document.querySelector("#reg_form");
+    var elementSize={"width":300,"height":"120"};
+    //登录框居中
+    t.center(login_form,elementSize);
+    //注册框居中
+    t.center(reg_form,elementSize);
+    //reg_form.style.left= (t.getWindowSize().width-300)/2+"px";
+    //reg_form.style.top= (t.getWindowSize().height-120)/2+"px";
+    //点击登录
+    loginBtn.addEventListener("click",function(){
+        var xhr4=new XMLHttpRequest();
+        xhr4.open("post","login.php");
+        xhr4.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        xhr4.send("username="+login_username.value+"&pwd="+login_pwd.value);
+        //alert("username="+login_username.value+"&pwd="+login_pwd.value);
+        xhr4.addEventListener("readystatechange",function(){
+            if(xhr4.readyState==4){
+                if(xhr4.status==200){
+                    //console.log(xhr4.responseText);
+                    if(xhr4.responseText=='ok'){
+                        login_form.style.display="none";
+                        //会员信息显示
+                        member_form.style.display="block";
+                        feedback.innerHTML="";
+                        //关闭弹出div
+                        reg_form.style.display="none";
+                        reg.style.display="none";
+                        member.innerHTML=login_username.value;
+                        //把用户名保存在sessionStorage;
+                        sessionStorage.setItem("username",login_username.value)
+                    }else if(xhr4.responseText=='failed'){
+                        feedback.innerHTML="用户名或者密码错误";
+                    }else{
+                        console.log(xhr4.responseText);
+                    }
+                }
+            }
+        })
+    })
+    //关闭登录框
+    login_close.addEventListener("click",function(){
+        login_form.style.display="none";
+    })
+    //打开登录框
+    loginBar.addEventListener("click",function(){
+        login_form.style.display="block";
+    })
+    /*判断是否有sessionStorage*/
+    if(sessionStorage.getItem("username")){
+        member.innerHTML=sessionStorage.getItem("username");
+        reg.style.display="none";
+        member_form.style.display="block";
+    }else{
+        reg.style.display="block";
+        member_form.style.display="none";
+    }
+    //
+    /*if(sessionStorage.getItem("username")||t.trim(member.innerHTML).length!=0){
+        alert("hello");
+    }*/
+    /*获取所有的用户名*/
+    getAll();
+    ////////////////
+    function getAll(){
+        var xhr3=new XMLHttpRequest();
+        //console.log(xhr3);
+        xhr3.open("post","getAll.php");
+        xhr3.send(null);
+        xhr3.addEventListener("readystatechange",function(){
+            if(xhr3.readyState==4){
+                if(xhr3.status==200){
+                    var str=eval(xhr3.responseText);
+                    var container="<ul>";
+                    for(i in str[0]){
+                        container+="<li class='memberList' data-id='"+str[0][i].id+"' onclick='Msg("+str[0][i].id+")'>"+str[0][i].username+"<a>&times;</a></li>"
+                    }
+                    container+="</ul>";
+                    container2.innerHTML=container;
+                    page.innerHTML=str[1];
+                    //console.log(str);
+                }
+            }
+        })
+    }
+    //点击注册
+    regBar.addEventListener("click",function(){
+        reg_form.style.display="block";
+    })
+    logout.addEventListener("click",function(){
+        sessionStorage.removeItem("username");
+        member.innerHTML="";
+        reg.style.display="block";
+        member_form.style.display="none";
+    })
+    /*用户名失去焦点验证*/
+    username.addEventListener("blur",function(){
+        if(t.trim(username.value).length!=0){
+            var xhr2=new XMLHttpRequest();
+            xhr2.open("post","checkUsername.php");
+            xhr2.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+            xhr2.send("username="+username.value);
+            xhr2.addEventListener("readystatechange",function(){
+                if(xhr2.readyState==4){
+                    if(xhr2.status==200){
+                        //console.log(xhr2.responseText);
+                        if(xhr2.responseText=='taken'){
+                            feedback.innerHTML="用户名已经存在";
+                        }else{
+                            feedback.innerHTML="";
+                        }
+                    }
+                }
+            })
+        }
+
+    })
+    //点击提交
+    regBtn.addEventListener("click",function(){
+        /////验证密码/////////
+        if(t.trim(pwd.value).length==0||t.trim(pwd.value).length>12){
+           feedback.innerHTML="密码不能为空或者大于12位";
+            return false;
+        }
+        ///////////////////
+        var xhr=new XMLHttpRequest();
+        //alert(username.value+pwd.value)
+        xhr.open("post","reg.php");
+        xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        xhr.send("username="+username.value+"&pwd="+pwd.value);
+        xhr.addEventListener("readystatechange",function(){
+            if(xhr.readyState==4){
+                if(xhr.status==200){
+                    //console.log(xhr.responseText);
+                    if(xhr.responseText=="ok"){
+                        //重新获取所有的会员;
+                        getAll();
+                        //alert(username.value);
+                        //注册登录信息隐藏
+                        reg.style.display="none";
+                        //会员信息显示
+                        member_form.style.display="block";
+                        console.log("注册成功");
+                        feedback.innerHTML="";
+                        //关闭弹出div
+                        reg_form.style.display="none";
+                        member.innerHTML=username.value;
+                        //把用户名保存在sessionStorage;
+                        sessionStorage.setItem("username",username.value)
+                    }else if(xhr.responseText=="failed"){
+                        console.log("注册失败");
+                    }else if(xhr.responseText=="taken"){
+                        //alert("用户名已经存在");
+                        feedback.innerHTML="用户名已经存在";
+                    }else{
+                        console.log(xhr.responseText);
+                    }
+                }
+            }
+        })
+    })
+    username.addEventListener("focus",function(){
+        //this.innerHTML='';
+        //alert(this.defaultValue);
+    })
+    //console.log(regBtn);
+    reg_close.addEventListener("click",function(){
+        reg_form.style.display="none";
+    })
+    //会员列表
+    var members=document.getElementsByClassName("memberList");
+    //console.log(members);
+    for(i in members){
+        console.log(members[i]);
+    }
+    ///删除函数
+    ///////////根据id删除元素/////////////////////
+    function Msg(_id){
+        //alert(_id);
+        var xhr5=new XMLHttpRequest();
+        //console.log(xhr);
+        xhr5.open("post","delete.php");
+        xhr5.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        xhr5.send("id="+_id);
+        xhr5.addEventListener("readystatechange",function(){
+            if(xhr5.readyState==4){
+                if(xhr5.status==200){
+                    if(xhr5.responseText=='ok'){
+                        getAll();
+                    }else if(xhr5.responseText=='failed'){
+                        console.log("删除失败");
+                    }else{
+                        console.log(xhr5.responseText);
+                    }
+                }
+            }
+        })
+    }
+    setPage("getAll.php?page=1");
+    function setPage(_url){
+        var xhr=new XMLHttpRequest();
+        xhr.open("get",_url);
+        xhr.send(null);
+        xhr.addEventListener("readystatechange",function(){
+            //alert("状态:"+xhr.readyState);
+            if(xhr.readyState==4){
+                if(xhr.status==200){
+                    var str=eval(xhr.responseText);
+                    var container="<ul>";
+                    for(i in str[0]){
+                        container+="<li class='memberList' data-id='"+str[0][i].id+"' onclick='Msg("+str[0][i].id+")'>"+str[0][i].username+"<a>&times;</a></li>"
+                    }
+                    container+="</ul>";
+                    container2.innerHTML=container;
+                    page.innerHTML=str[1];
+                }
+            }
+        });
+    }
+</script>
+</body>
+</html>
